@@ -106,7 +106,7 @@ class ProjectSetupWidget(QtWidgets.QWidget):
     def build_ui(self):
         layout = QtWidgets.QVBoxLayout(self)
 
-        title = QtWidgets.QLabel("Project Setups")
+        title = QtWidgets.QLabel("Project Setup")
         title.setStyleSheet("font-size: 16px; font-weight: bold;")
 
         base_path_label = QtWidgets.QLabel("Base Path:")

@@ -9,26 +9,26 @@ from my_pipeline.ui.project_setup_widget import ProjectSetupWidget
 class MyPipelineWindow(QtWidgets.QWidget):
     def __init__(self):
         super(MyPipelineWindow, self).__init__()
-        self.setWindowTitle("My Nuke Pipeline")
+        self.setWindowTitle("LJ Nuke Pipeline")
         self.resize(700, 420)
         self.build_ui()
 
     def build_ui(self):
         main_layout = QtWidgets.QHBoxLayout(self)
 
-        # 左侧导航
+        # Leftside pannel
         self.nav_list = QtWidgets.QListWidget()
-        self.nav_list.setFixedWidth(180)
+        self.nav_list.setFixedWidth(150)
         self.nav_list.addItem("Project Setup")
-        self.nav_list.addItem("Nuke Info")
-        self.nav_list.addItem("Tools")
+        self.nav_list.addItem("Script Info")
+        self.nav_list.addItem("Load")
 
-        # 右侧页面区
+        # rightside pannel
         self.stack = QtWidgets.QStackedWidget()
 
         self.project_setup_page = ProjectSetupWidget()
-        self.nuke_info_page = self._build_placeholder("Nuke Info page coming soon.")
-        self.tools_page = self._build_placeholder("Tools page coming soon.")
+        self.nuke_info_page = self._build_placeholder("Script Info page coming soon.")
+        self.tools_page = self._build_placeholder("Load page coming soon.")
 
         self.stack.addWidget(self.project_setup_page)
         self.stack.addWidget(self.nuke_info_page)
