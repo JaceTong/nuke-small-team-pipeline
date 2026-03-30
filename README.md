@@ -6,4 +6,3 @@ It is in early development. The goal is to have several part:
 2. Some useful settings to improve efficiency
 3. Some useful tools for everyday production
 4. More
-

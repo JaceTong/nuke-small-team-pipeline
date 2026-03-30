@@ -1,49 +1,45 @@
-import nuke
-
 try:
-    
     from PySide6 import QtWidgets
 except ImportError:
-    
     from PySide2 import QtWidgets
 
-
-class MyPipelineWindow(QtWidgets.QWidget):
-    def __init__(self):
-        super(MyPipelineWindow, self).__init__()
-        self.setWindowTitle("My Nuke Pipeline")
-        self.resize(420, 220)
-
-        self.build_ui()
-
-    def build_ui(self):
-        layout = QtWidgets.QVBoxLayout()
-
-        title = QtWidgets.QLabel("Welcome to My Nuke Pipeline")
-        button = QtWidgets.QPushButton("Test Button")
-
-        button.clicked.connect(self.on_test_clicked)
-
-        layout.addWidget(title)
-        layout.addWidget(button)
-        layout.addStretch()
-
-        self.setLayout(layout)
-
-    def on_test_clicked(self):
-        nuke.message("It works!")
+import importlib
+import my_pipeline.ui.main_window
+import sys
 
 
-_pipeline_window = None
+def reload_my_pipeline():
+    modules = [
+        (name, module)
+        for name, module in sys.modules.items()
+        if name.startswith("my_pipeline")
+    ]
+    modules.sort(key=lambda x: len(x[0]), reverse=True)
 
+    for name, module in modules:
+        try:
+            importlib.reload(module)
+            print(f"Reloaded: {name}")
+        except Exception as e:
+            print(f"Failed to reload {name}: {e}")
+
+
+
+
+
+
+pipeline_window = None
 
 def show_pipeline_window():
-    global _pipeline_window
+    global pipeline_window
 
-    
-    if _pipeline_window is None:
-        _pipeline_window = MyPipelineWindow()
+    try:
+        if pipeline_window is not None:
+            pipeline_window.close()
+    except Exception:
+        pass
 
-    _pipeline_window.show()
-    _pipeline_window.raise_()
-    _pipeline_window.activateWindow()
+    reload_my_pipeline()
+
+    pipeline_window = my_pipeline.ui.main_window.MyPipelineWindow()
+    pipeline_window.show()
