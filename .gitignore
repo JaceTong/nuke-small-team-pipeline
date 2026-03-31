@@ -216,5 +216,5 @@ __marimo__/
 # Nuke backup files
 *.nk~
 
-
+# json files
 *.json
