@@ -1,6 +1,5 @@
-import nuke
 import os
-
+import nuke
 
 try:
     from PySide6 import QtWidgets
@@ -18,12 +17,8 @@ from my_pipeline.tools.project_browser import (
     list_shot_folders,
     list_task_folders,
 )
-
-
+from my_pipeline.tools.nuke_script_browser import list_nuke_scripts
 from my_pipeline.tools.settings_manager import get_base_path, set_base_path
-
-import my_pipeline.tools.
-
 
 
 class NewProjectDialog(QtWidgets.QDialog):
@@ -60,14 +55,6 @@ class NewProjectDialog(QtWidgets.QDialog):
 
 
 class ProjectSetupWidget(QtWidgets.QWidget):
-    def get_selected_script(self):
-        item = self.script_list.currentItem()
-        return item.text() if item else ""
-    
-    def load_saved_base_path(self):
-        saved_base_path = get_base_path()
-        self.base_path_input.setText(saved_base_path)
-
     def __init__(self):
         super(ProjectSetupWidget, self).__init__()
         self.default_folder_names = DEFAULT_SUBFOLDERS
@@ -98,9 +85,6 @@ class ProjectSetupWidget(QtWidgets.QWidget):
         base_path_row = QtWidgets.QHBoxLayout()
         base_path_row.addWidget(self.base_path_input)
         base_path_row.addWidget(self.browse_button)
-
-
-
 
         # Project dropdown
         project_name_label = QtWidgets.QLabel("Project Name:")
@@ -199,6 +183,10 @@ class ProjectSetupWidget(QtWidgets.QWidget):
         self.open_script_button.clicked.connect(self.on_open_script_clicked)
         self.script_list.itemDoubleClicked.connect(lambda _: self.on_open_script_clicked())
 
+    def load_saved_base_path(self):
+        saved_base_path = get_base_path()
+        self.base_path_input.setText(saved_base_path)
+
     def show_info(self, title, message):
         QtWidgets.QMessageBox.information(self, title, message)
         self.window().raise_()
@@ -246,6 +234,29 @@ class ProjectSetupWidget(QtWidgets.QWidget):
         item = self.task_list.currentItem()
         return item.text() if item else ""
 
+    def get_selected_script(self):
+        item = self.script_list.currentItem()
+        return item.text() if item else ""
+
+    def refresh_projects(self):
+        base_path = self.get_base_path()
+
+        self.project_combo.clear()
+        self.sequence_list.clear()
+        self.shot_list.clear()
+        self.task_list.clear()
+        self.script_list.clear()
+        self.current_path_label.setText("Current Selection: ")
+
+        if not base_path:
+            return
+
+        project_names = list_project_folders(base_path)
+        self.project_combo.addItems(project_names)
+
+        if project_names:
+            self.refresh_browser()
+
     def refresh_browser(self):
         base_path = self.get_base_path()
         project_name = self.get_project_name()
@@ -254,21 +265,6 @@ class ProjectSetupWidget(QtWidgets.QWidget):
         self.shot_list.clear()
         self.task_list.clear()
         self.script_list.clear()
-        self.current_path_label.setText("Current Selection: ")
-
-        if not base_path or not project_name:
-            return
-
-        sequence_names = list_sequence_folders(base_path, project_name)
-        self.sequence_list.addItems(sequence_names)
-
-    def refresh_browser(self):
-        base_path = self.get_base_path()
-        project_name = self.get_project_name()
-
-        self.sequence_list.clear()
-        self.shot_list.clear()
-        self.task_list.clear()
         self.current_path_label.setText("Current Selection: ")
 
         if not base_path or not project_name:
@@ -313,11 +309,36 @@ class ProjectSetupWidget(QtWidgets.QWidget):
 
         self.update_current_selection_label()
 
+    def on_task_changed(self):
+        base_path = self.get_base_path()
+        project_name = self.get_project_name()
+        sequence_name = self.get_selected_sequence()
+        shot_name = self.get_selected_shot()
+        task_name = self.get_selected_task()
+
+        self.script_list.clear()
+
+        if not base_path or not project_name or not sequence_name or not shot_name or not task_name:
+            self.update_current_selection_label()
+            return
+
+        script_names = list_nuke_scripts(
+            base_path,
+            project_name,
+            sequence_name,
+            shot_name,
+            task_name
+        )
+        self.script_list.addItems(script_names)
+
+        self.update_current_selection_label()
+
     def update_current_selection_label(self):
         project_name = self.get_project_name()
         sequence_name = self.get_selected_sequence()
         shot_name = self.get_selected_shot()
         task_name = self.get_selected_task()
+        script_name = self.get_selected_script()
 
         parts = [project_name] if project_name else []
 
@@ -327,6 +348,8 @@ class ProjectSetupWidget(QtWidgets.QWidget):
             parts.append(shot_name)
         if task_name:
             parts.append(task_name)
+        if script_name:
+            parts.append(script_name)
 
         display_text = "/".join(parts) if parts else ""
         self.current_path_label.setText("Current Selection: {}".format(display_text))
@@ -401,31 +424,6 @@ class ProjectSetupWidget(QtWidgets.QWidget):
         except Exception as e:
             self.show_error("Error", str(e))
 
-
-    def on_task_changed(self):
-        base_path = self.get_base_path()
-        project_name = self.get_project_name()
-        sequence_name = self.get_selected_sequence()
-        shot_name = self.get_selected_shot()
-        task_name = self.get_selected_task()
-
-        self.script_list.clear()
-
-        if not base_path or not project_name or not sequence_name or not shot_name or not task_name:
-            self.update_current_selection_label()
-            return
-
-        script_names = list_nuke_scripts(
-            base_path,
-            project_name,
-            sequence_name,
-            shot_name,
-            task_name
-        )
-        self.script_list.addItems(script_names)
-
-        self.update_current_selection_label()
-
     def on_open_script_clicked(self):
         base_path = self.get_base_path()
         project_name = self.get_project_name()
@@ -460,6 +458,7 @@ class ProjectSetupWidget(QtWidgets.QWidget):
             sequence_name,
             shot_name,
             task_name,
+            "scripts",
             script_name
         )
 
